@@ -241,7 +241,7 @@ const platform_flash_t platform_flash_peripherals[] =
   {
     .flash_type                   = FLASH_TYPE_EMBEDDED,
     .flash_start_addr             = 0x08000000,
-    .flash_length                 = 0x100000,
+    .flash_length                 = 0x20000,
   },
 };
 
@@ -255,30 +255,30 @@ const mico_logic_partition_t mico_partitions[] =
     .partition_owner           = MICO_FLASH_EMBEDDED,
     .partition_description     = "Bootloader",
     .partition_start_addr      = 0x08000000,
-    .partition_length          =     0x8000,    //32k bytes
+    .partition_length          = 0x8000,    //32k bytes
     .partition_options         = PAR_OPT_READ_EN | PAR_OPT_WRITE_DIS,
   },
   [MICO_PARTITION_APPLICATION] =
   {
     .partition_owner           = MICO_FLASH_EMBEDDED,
     .partition_description     = "Application",
-    .partition_start_addr      = 0x08008000, 
-    .partition_length          =    0x8000,   //336k bytes
+    .partition_start_addr      = 0x08010000, 
+    .partition_length          = 0x8000,   //32k bytes
     .partition_options         = PAR_OPT_READ_EN | PAR_OPT_WRITE_DIS,
   },
   [MICO_PARTITION_OTA_TEMP] =
   {
     .partition_owner           = MICO_FLASH_EMBEDDED,
     .partition_description     = "OTA Storage",
-    .partition_start_addr      = 0x08060000,
-    .partition_length          = 0x60000, //384k bytes
+    .partition_start_addr      = 0x08018000,
+    .partition_length          = 0x8000, //32k bytes
     .partition_options         = PAR_OPT_READ_EN | PAR_OPT_WRITE_EN,
   },
   [MICO_PARTITION_PARAMETER_1] =
   {
     .partition_owner           = MICO_FLASH_EMBEDDED,
     .partition_description     = "PARAMETER1",
-    .partition_start_addr      = 0x08004000,
+    .partition_start_addr      = 0x08008000,
     .partition_length          = 0x4000, // 16k bytes
     .partition_options         = PAR_OPT_READ_EN | PAR_OPT_WRITE_EN,
   },
@@ -286,7 +286,7 @@ const mico_logic_partition_t mico_partitions[] =
   {
     .partition_owner           = MICO_FLASH_EMBEDDED,
     .partition_description     = "PARAMETER1",
-    .partition_start_addr      = 0x08008000,
+    .partition_start_addr      = 0x0800C000,
     .partition_length          = 0x4000, //16k bytes
     .partition_options         = PAR_OPT_READ_EN | PAR_OPT_WRITE_EN,
   },

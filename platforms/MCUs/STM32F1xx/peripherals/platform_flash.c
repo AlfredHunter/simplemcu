@@ -39,7 +39,11 @@
 #define ADDR_FLASH_SECTOR_28    ((uint32_t)0x0801C000) /* Base @ of Sector 28, page 112 to 115: 4 Kbyte */
 #define ADDR_FLASH_SECTOR_29    ((uint32_t)0x0801D000) /* Base @ of Sector 29, page 116 to 119: 4 Kbyte */
 #define ADDR_FLASH_SECTOR_30    ((uint32_t)0x0801E000) /* Base @ of Sector 30, page 120 to 123: 4 Kbyte */
+#if defined (STM32F103xB)
 #define ADDR_FLASH_SECTOR_31    ((uint32_t)0x0801F000) /* Base @ of Sector 31, page 124 to 127: 4 Kbyte */
+#elif defined (STM32F103xE)
+#define ADDR_FLASH_SECTOR_31    ((uint32_t)0x0801F000) /* Base @ of Sector 32, page 62 to 255: 388 Kbyte */
+#endif
 
 /* End of the Flash address */
 #if defined (STM32F103xB)
@@ -350,16 +354,16 @@ OSStatus internalFlashProtect(uint32_t StartAddress, uint32_t EndAddress, bool e
 {
   OSStatus err = kNoErr;
   FLASH_OBProgramInitTypeDef OptionsBytesStruct; 
-  uint32_t StartSector, EndSector, i = 0;
+  static uint32_t StartSector, EndSector, i = 0;
   bool needupdate = false;
   
   StartSector = _GetWRPSector(StartAddress);
   EndSector = _GetWRPSector(EndAddress);
-     
+
   /* Get pages write protection status ****************************************/
   HAL_FLASHEx_OBGetConfig( &OptionsBytesStruct );  
   
-  for( i = StartSector; i <= EndSector; i=i<<1 )
+  for( i = StartSector; i <= EndSector && i != 0; i = i<<1 )
   {
     if( ( enable == true && (OptionsBytesStruct.WRPPage & i) == 0x0 ) ||
         ( enable == false && (OptionsBytesStruct.WRPPage & i) ) ) {
@@ -405,10 +409,15 @@ exit:
 static uint32_t _GetWRPSector(uint32_t Address)
 {
   uint32_t sector = 0;
-  
-  sector = ( Address - FLASH_START_ADDRESS ) / (FLASH_PAGE_SIZE * 3);
-
+#if defined(STM32F103xB)  
+  sector = ( Address - FLASH_START_ADDRESS ) / (FLASH_PAGE_SIZE * 4);
   return (OB_WRP_PAGES0TO3 << sector);
+#elif defined(STM32F103xE)
+  if( Address >= ADDR_FLASH_SECTOR_31 )
+    return OB_WRP_PAGES62TO255;
+  sector = ( Address - FLASH_START_ADDRESS ) / (FLASH_PAGE_SIZE * 2);
+  return (OB_WRP_PAGES0TO1 << sector);
+#endif
 }
 /**
 * @brief  Gets the page of a given address
@@ -434,7 +443,9 @@ static uint32_t _GetPageAddress(uint32_t Address)
 static OSStatus _GetAddress(uint32_t sector, uint32_t *startAddress, uint32_t *endAddress)
 {
   OSStatus err = kNoErr; 
+#if defined (STM32F103xB)
   uint32_t i, j;
+
   for( i = OB_WRP_PAGES0TO3, j = 0; i < OB_WRP_PAGES124TO127; i=i<< 1, j++ )
   {
     if( i == sector )
@@ -448,6 +459,8 @@ static OSStatus _GetAddress(uint32_t sector, uint32_t *startAddress, uint32_t *e
   {
     err = kNotFoundErr;
   }
-  
+#elif defined (STM32F103xE)
+  err = kUnsupportedErr;
+#endif
   return err;
 }

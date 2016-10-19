@@ -172,7 +172,7 @@ OSStatus MicoFlashEnableSecurity( mico_partition_t partition, uint32_t off_set, 
 
 
 
-#ifdef BOOTLOADER
+//#ifdef BOOTLOADER
 /**@brief    Disable security options on a logical partition
  *
  * @param    partition     : The target flash logical partition
@@ -186,7 +186,7 @@ OSStatus MicoFlashEnableSecurity( mico_partition_t partition, uint32_t off_set, 
  * @return   kGeneralErr   : If an error occurred with any step
  */
 OSStatus MicoFlashDisableSecurity( mico_partition_t partition, uint32_t off_set, uint32_t size );
-#endif
+//#endif
 
 
 /** @} */

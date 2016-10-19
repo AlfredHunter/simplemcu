@@ -161,6 +161,8 @@ void init_clocks( void )
   RCC_ClkInitTypeDef clkinitstruct = {0};
   RCC_OscInitTypeDef oscinitstruct = {0};
 
+  if(__HAL_RCC_GET_SYSCLK_SOURCE() == RCC_SYSCLKSOURCE_STATUS_PLLCLK)
+    return;
   HAL_Init(); 
 /**
   * @brief  System Clock Configuration
@@ -256,7 +258,7 @@ void init_architecture( void )
 #endif
   
   /* Initialise RTC */
-  platform_rtc_init( );
+//  platform_rtc_init( );
   
 #ifndef MICO_DISABLE_MCU_POWERSAVE
   /* Initialise MCU powersave */
@@ -297,6 +299,14 @@ uint32_t mico_get_time_no_os(void)
 {
   return no_os_tick;
 }
+#else
+
+void SysTick_Handler(void)
+{
+  osSystickHandler();
+  HAL_IncTick();
+}
+
 #endif
 
 

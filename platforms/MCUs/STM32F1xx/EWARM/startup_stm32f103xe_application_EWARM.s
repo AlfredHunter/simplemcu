@@ -1,9 +1,9 @@
 ;******************** (C) COPYRIGHT 2015 STMicroelectronics ********************
-;* File Name          : startup_stm32f101xe.s
+;* File Name          : startup_stm32f103xe.s
 ;* Author             : MCD Application Team
 ;* Version            : V4.0.1
 ;* Date               : 31-July-2015
-;* Description        : STM32F101xE Access Line Devices vector table for EWARM toolchain.
+;* Description        : STM32F103xE Performance Line Devices vector table for EWARM toolchain.
 ;*                      This module performs:
 ;*                      - Set the initial SP
 ;*                      - Set the initial PC == __iar_program_start,
@@ -66,7 +66,8 @@
         SECTION .intvec:CODE:NOROOT(2)
 
         EXTERN  __iar_program_start
-        EXTERN  SystemInit        
+        EXTERN  SystemInit
+        EXTERN  hard_fault_handler_c
         PUBLIC  __vector_table
 
         DATA
@@ -108,16 +109,16 @@ __vector_table
         DCD     DMA1_Channel5_IRQHandler  ; DMA1 Channel 5
         DCD     DMA1_Channel6_IRQHandler  ; DMA1 Channel 6
         DCD     DMA1_Channel7_IRQHandler  ; DMA1 Channel 7
-        DCD     ADC1_IRQHandler         ; ADC1
-        DCD     0                         ; Reserved
-        DCD     0                         ; Reserved
-        DCD     0                         ; Reserved
-        DCD     0                         ; Reserved
+        DCD     ADC1_2_IRQHandler         ; ADC1 & ADC2
+        DCD     USB_HP_CAN1_TX_IRQHandler  ; USB High Priority or CAN1 TX
+        DCD     USB_LP_CAN1_RX0_IRQHandler ; USB Low  Priority or CAN1 RX0
+        DCD     CAN1_RX1_IRQHandler       ; CAN1 RX1
+        DCD     CAN1_SCE_IRQHandler       ; CAN1 SCE
         DCD     EXTI9_5_IRQHandler        ; EXTI Line 9..5
-        DCD     0                         ; Reserved
-        DCD     0                         ; Reserved
-        DCD     0                         ; Reserved
-        DCD     0                         ; Reserved
+        DCD     TIM1_BRK_IRQHandler       ; TIM1 Break
+        DCD     TIM1_UP_IRQHandler        ; TIM1 Update
+        DCD     TIM1_TRG_COM_IRQHandler   ; TIM1 Trigger and Commutation
+        DCD     TIM1_CC_IRQHandler        ; TIM1 Capture Compare
         DCD     TIM2_IRQHandler           ; TIM2
         DCD     TIM3_IRQHandler           ; TIM3
         DCD     TIM4_IRQHandler           ; TIM4
@@ -132,14 +133,14 @@ __vector_table
         DCD     USART3_IRQHandler         ; USART3
         DCD     EXTI15_10_IRQHandler      ; EXTI Line 15..10
         DCD     RTC_Alarm_IRQHandler       ; RTC Alarm through EXTI Line
-        DCD     0                         ; Reserved
-        DCD     0                         ; Reserved
-        DCD     0                         ; Reserved
-        DCD     0                         ; Reserved
-        DCD     0                         ; Reserved
-        DCD     0                         ; Reserved
+        DCD     USBWakeUp_IRQHandler      ; USB Wakeup from suspend
+        DCD     TIM8_BRK_IRQHandler       ; TIM8 Break
+        DCD     TIM8_UP_IRQHandler        ; TIM8 Update
+        DCD     TIM8_TRG_COM_IRQHandler   ; TIM8 Trigger and Commutation
+        DCD     TIM8_CC_IRQHandler        ; TIM8 Capture Compare
+        DCD     ADC3_IRQHandler           ; ADC3
         DCD     FSMC_IRQHandler           ; FSMC
-        DCD     0                         ; Reserved
+        DCD     SDIO_IRQHandler           ; SDIO
         DCD     TIM5_IRQHandler           ; TIM5
         DCD     SPI3_IRQHandler           ; SPI3
         DCD     UART4_IRQHandler          ; UART4
@@ -159,8 +160,8 @@ __vector_table
         PUBWEAK Reset_Handler
         SECTION .text:CODE:REORDER:NOROOT(2)
 Reset_Handler
-        LDR     R0, =SystemInit
-        BLX     R0
+        ;LDR     R0, =SystemInit
+        ;BLX     R0
         LDR     R0, =__iar_program_start
         BX      R0
                
@@ -172,7 +173,12 @@ NMI_Handler
         PUBWEAK HardFault_Handler
         SECTION .text:CODE:REORDER:NOROOT(1)
 HardFault_Handler
-        B HardFault_Handler
+         TST LR, #4
+	 ITE EQ
+	 MRSEQ R0, MSP
+	 MRSNE R0, PSP
+	 B hard_fault_handler_c
+        //B HardFault_Handler
 
         PUBWEAK MemManage_Handler
         SECTION .text:CODE:REORDER:NOROOT(1)
@@ -299,15 +305,55 @@ DMA1_Channel6_IRQHandler
 DMA1_Channel7_IRQHandler
         B DMA1_Channel7_IRQHandler
 
-        PUBWEAK ADC1_IRQHandler
+        PUBWEAK ADC1_2_IRQHandler
         SECTION .text:CODE:REORDER:NOROOT(1)
-ADC1_IRQHandler
-        B ADC1_IRQHandler
- 
+ADC1_2_IRQHandler
+        B ADC1_2_IRQHandler
+
+        PUBWEAK USB_HP_CAN1_TX_IRQHandler
+        SECTION .text:CODE:REORDER:NOROOT(1)
+USB_HP_CAN1_TX_IRQHandler
+        B USB_HP_CAN1_TX_IRQHandler
+
+        PUBWEAK USB_LP_CAN1_RX0_IRQHandler
+        SECTION .text:CODE:REORDER:NOROOT(1)
+USB_LP_CAN1_RX0_IRQHandler
+        B USB_LP_CAN1_RX0_IRQHandler
+
+        PUBWEAK CAN1_RX1_IRQHandler
+        SECTION .text:CODE:REORDER:NOROOT(1)
+CAN1_RX1_IRQHandler
+        B CAN1_RX1_IRQHandler
+
+        PUBWEAK CAN1_SCE_IRQHandler
+        SECTION .text:CODE:REORDER:NOROOT(1)
+CAN1_SCE_IRQHandler
+        B CAN1_SCE_IRQHandler
+
         PUBWEAK EXTI9_5_IRQHandler
         SECTION .text:CODE:REORDER:NOROOT(1)
 EXTI9_5_IRQHandler
         B EXTI9_5_IRQHandler
+
+        PUBWEAK TIM1_BRK_IRQHandler
+        SECTION .text:CODE:REORDER:NOROOT(1)
+TIM1_BRK_IRQHandler
+        B TIM1_BRK_IRQHandler
+
+        PUBWEAK TIM1_UP_IRQHandler
+        SECTION .text:CODE:REORDER:NOROOT(1)
+TIM1_UP_IRQHandler
+        B TIM1_UP_IRQHandler
+
+        PUBWEAK TIM1_TRG_COM_IRQHandler
+        SECTION .text:CODE:REORDER:NOROOT(1)
+TIM1_TRG_COM_IRQHandler
+        B TIM1_TRG_COM_IRQHandler
+
+        PUBWEAK TIM1_CC_IRQHandler
+        SECTION .text:CODE:REORDER:NOROOT(1)
+TIM1_CC_IRQHandler
+        B TIM1_CC_IRQHandler
 
         PUBWEAK TIM2_IRQHandler
         SECTION .text:CODE:REORDER:NOROOT(1)
@@ -378,6 +424,36 @@ EXTI15_10_IRQHandler
         SECTION .text:CODE:REORDER:NOROOT(1)
 RTC_Alarm_IRQHandler
         B RTC_Alarm_IRQHandler
+
+        PUBWEAK USBWakeUp_IRQHandler
+        SECTION .text:CODE:REORDER:NOROOT(1)
+USBWakeUp_IRQHandler
+        B USBWakeUp_IRQHandler
+
+        PUBWEAK TIM8_BRK_IRQHandler
+        SECTION .text:CODE:REORDER:NOROOT(1)
+TIM8_BRK_IRQHandler
+        B TIM8_BRK_IRQHandler
+
+        PUBWEAK TIM8_UP_IRQHandler
+        SECTION .text:CODE:REORDER:NOROOT(1)
+TIM8_UP_IRQHandler
+        B TIM8_UP_IRQHandler
+
+        PUBWEAK TIM8_TRG_COM_IRQHandler
+        SECTION .text:CODE:REORDER:NOROOT(1)
+TIM8_TRG_COM_IRQHandler
+        B TIM8_TRG_COM_IRQHandler
+
+        PUBWEAK TIM8_CC_IRQHandler
+        SECTION .text:CODE:REORDER:NOROOT(1)
+TIM8_CC_IRQHandler
+        B TIM8_CC_IRQHandler
+
+        PUBWEAK ADC3_IRQHandler
+        SECTION .text:CODE:REORDER:NOROOT(1)
+ADC3_IRQHandler
+        B ADC3_IRQHandler
 
         PUBWEAK FSMC_IRQHandler
         SECTION .text:CODE:REORDER:NOROOT(1)

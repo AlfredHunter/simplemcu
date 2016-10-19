@@ -533,10 +533,13 @@
         <group>
           <name>EWARM</name>
           <file>
-            <name>$PROJ_DIR$\..\..\..\..\platforms\MCUs\STM32F1xx\EWARM\startup_stm32f101xe_bootloader_EWARM..s</name>
+            <name>$PROJ_DIR$\..\..\..\..\board\PowerBoard_V2\bootloaderLinkerForIAR.icf</name>
           </file>
           <file>
             <name>$PROJ_DIR$\..\..\..\..\platforms\MCUs\STM32F1xx\EWARM\startup_stm32f103xb_bootloader_EWARM.s</name>
+          </file>
+          <file>
+            <name>$PROJ_DIR$\..\..\..\..\platforms\MCUs\STM32F1xx\EWARM\startup_stm32f103xe_bootloader_EWARM.s</name>
           </file>
         </group>
         <group>

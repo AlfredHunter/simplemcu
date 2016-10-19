@@ -362,7 +362,7 @@ void Main_Menu(void)
     else if(strcmp(cmdname, "BOOT") == 0 || strcmp(cmdname, "5") == 0)	{
       printf ("\n\rBooting.......\n\r");
       partition = MicoFlashGetInfo( MICO_PARTITION_APPLICATION );
-      bootloader_start_app( partition->partition_start_addr );
+      //bootloader_start_app( partition->partition_start_addr );
     }
     
     /***************** Command: Reboot *************************/

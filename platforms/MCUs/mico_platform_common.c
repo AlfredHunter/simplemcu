@@ -773,6 +773,11 @@ OSStatus MicoFlashDisableSecurity( mico_partition_t partition, uint32_t off_set,
 exit:
   return err;
 }
-
+#else
+OSStatus MicoFlashDisableSecurity( mico_partition_t partition, uint32_t off_set, uint32_t size )
+{
+  OSStatus err = kNoErr;//kUnsupportedErr;
+  return err;
+}
 #endif
 

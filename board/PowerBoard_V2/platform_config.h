@@ -46,9 +46,9 @@
 #define INT_FLASH_WAIT_STATE    FLASH_Latency_3          /* Internal flash wait state = 3 cycles */
 #endif
 /* The number of UART interfaces this hardware platform has */
-#define NUMBER_OF_UART_INTERFACES  2
+#define NUMBER_OF_UART_INTERFACES  3
 
-#define STDIO_UART       MICO_UART_1
+//#define STDIO_UART       MICO_UART_1
 
 /* Define the address from where user application will be loaded.
 Note: the 1st sector 0x08000000-0x08003FFF is reserved for the IAP code */

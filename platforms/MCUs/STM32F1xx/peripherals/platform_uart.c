@@ -24,7 +24,7 @@
 /******************************************************
 *                    Constants
 ******************************************************/
-
+//#define UART_NOT_USE_DMA
 //#define DMA_INTERRUPT_FLAGS  ( DMA_IT_TC | DMA_IT_TE | DMA_IT_DME | DMA_IT_FE )
 #define DMA_INTERRUPT_FLAGS  ( DMA_IT_TC | DMA_IT_TE ) // | DMA_IT_HT
 
@@ -296,8 +296,10 @@ OSStatus platform_uart_init( platform_uart_driver_t* driver, const platform_uart
     //DMA_ITConfig( peripheral->rx_dma_config.stream, DMA_INTERRUPT_FLAGS, ENABLE );
     __HAL_DMA_ENABLE_IT( driver->uart_handle->hdmarx, DMA_INTERRUPT_FLAGS );
   }
-//  peripheral->port->CR1 &= ~USART_CR1_RXNEIE;
-//  peripheral->port->CR3 &= ~USART_CR3_DMAR;
+#ifdef UART_NOT_USE_DMA
+  peripheral->port->CR1 &= ~USART_CR1_RXNEIE;
+  peripheral->port->CR3 &= ~USART_CR3_DMAR;
+#endif
 exit:
   platform_mcu_powersave_enable( );
   return err;
@@ -389,7 +391,7 @@ OSStatus platform_uart_transmit_bytes( platform_uart_driver_t* driver, const uin
   mico_rtos_lock_mutex( &driver->tx_mutex );
 
   require_action_quiet( ( driver != NULL ) && ( data_out != NULL ) && ( size != 0 ), exit, err = kParamErr);
-#if 0
+#ifdef UART_NOT_USE_DMA
   while (HAL_UART_GetState(driver->uart_handle) != HAL_UART_STATE_READY)
   {
     driver->uart_handle->State = HAL_UART_STATE_READY;
@@ -448,7 +450,7 @@ OSStatus platform_uart_receive_bytes( platform_uart_driver_t* driver, uint8_t* d
   OSStatus err = kNoErr;
 
   require_action_quiet( ( driver != NULL ) && ( data_in != NULL ) && ( expected_data_size != 0 ), exit, err = kParamErr);
-#if 0  
+#ifdef UART_NOT_USE_DMA  
   HAL_UART_Receive(driver->uart_handle, (uint8_t *)data_in, expected_data_size, timeout_ms);
 #else
   if ( driver->rx_buffer != NULL)

@@ -52,7 +52,12 @@ const uint32_t gpio_peripheral_clocks[NUMBER_OF_GPIO_PORTS] =
     [0] = RCC_APB2ENR_IOPAEN,
     [1] = RCC_APB2ENR_IOPBEN,
     [2] = RCC_APB2ENR_IOPCEN,
-    [3] = RCC_APB2ENR_IOPDEN
+    [3] = RCC_APB2ENR_IOPDEN,
+#if defined(STM32F103xE)
+    [4] = RCC_APB2ENR_IOPEEN,
+    [5] = RCC_APB2ENR_IOPFEN,
+    [6] = RCC_APB2ENR_IOPGEN,
+#endif
 };
 
 /* Runtime GPIO IRQ data */
@@ -312,6 +317,14 @@ uint8_t platform_gpio_get_port_number( platform_gpio_port_t* gpio_port )
             return 2;
         case GPIOD_BASE:
             return 3;
+#if defined(STM32F103xE)
+        case GPIOE_BASE:
+            return 4;
+        case GPIOF_BASE:
+            return 5;
+        case GPIOG_BASE:
+            return 6;
+#endif
         default:
             return 0xFF;
     }

@@ -108,6 +108,8 @@ typedef enum
     MICO_GPIO_UART1_RX,
     MICO_GPIO_UART2_TX,
     MICO_GPIO_UART2_RX,
+    MICO_GPIO_UART3_TX,
+    MICO_GPIO_UART3_RX,
     MICO_GPIO_MAX, /* Denotes the total number of GPIO port aliases. Not a valid GPIO alias */
     MICO_GPIO_NONE,
 } mico_gpio_t;
@@ -148,6 +150,7 @@ typedef enum
 {
     MICO_UART_1,
     MICO_UART_2,
+    MICO_UART_3,
     MICO_UART_MAX, /* Denotes the total number of UART port aliases. Not a valid UART alias */
     MICO_UART_NONE,
 } mico_uart_t;
@@ -165,10 +168,10 @@ typedef enum
 } mico_user_partition_t;
 
 #ifdef BOOTLOADER
-#define STDIO_UART          MICO_UART_1
+#define STDIO_UART          MICO_UART_3
 #define STDIO_UART_BAUDRATE (115200) 
 #else
-#define STDIO_UART          MICO_UART_1
+#define STDIO_UART          MICO_UART_3
 #define STDIO_UART_BAUDRATE (115200) 
 #endif
 

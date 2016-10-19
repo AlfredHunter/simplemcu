@@ -48,7 +48,7 @@
 /* The number of UART interfaces this hardware platform has */
 #define NUMBER_OF_UART_INTERFACES  2
 
-#define STDIO_UART       MICO_UART_1
+//#define STDIO_UART       MICO_UART_2
 
 /* Define the address from where user application will be loaded.
 Note: the 1st sector 0x08000000-0x08003FFF is reserved for the IAP code */

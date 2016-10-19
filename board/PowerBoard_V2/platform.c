@@ -74,12 +74,14 @@ extern WEAK void bootloader_start(void);
 
 const platform_gpio_t platform_gpio_pins[] =
 {
-  [MICO_GPIO_SYS_LED]   = { GPIOC,  9  }, 
+  [MICO_GPIO_SYS_LED]   = { GPIOG,  9  }, //{ GPIOC,  9  }, 
   [MICO_GPIO_SWITCH]    = { GPIOC,  6  },
   [MICO_GPIO_UART1_TX]  = { GPIOB,  10 },
   [MICO_GPIO_UART1_RX]  = { GPIOB,  11 },
   [MICO_GPIO_UART2_TX]  = { GPIOA,  9  },
   [MICO_GPIO_UART2_RX]  = { GPIOA,  10 },
+  [MICO_GPIO_UART3_TX]  = { GPIOA,  2  },
+  [MICO_GPIO_UART3_RX]  = { GPIOA,  3  },
 #if 0  
   [MICO_GPIO_6]  = { GPIOA,  4 },
   [MICO_GPIO_7]  = { GPIOB,  3 },
@@ -207,6 +209,30 @@ const platform_uart_t platform_uart_peripherals[] =
       .error_flags                = DMA_ISR_TEIF5,
     },
   },
+  [MICO_UART_3] =
+  {
+    .port                         = USART2,
+    .pin_tx                       = &platform_gpio_pins[MICO_GPIO_UART3_TX],
+    .pin_rx                       = &platform_gpio_pins[MICO_GPIO_UART3_RX],
+    .pin_cts                      = NULL,
+    .pin_rts                      = NULL,
+    .tx_dma_config =
+    {
+      .controller                 = DMA1,
+      .channel                    = DMA1_Channel7,
+      .irq_vector                 = DMA1_Channel7_IRQn,
+      .complete_flags             = DMA_ISR_TCIF7,
+      .error_flags                = DMA_ISR_TEIF7,
+    },
+    .rx_dma_config =
+    {
+      .controller                 = DMA1,
+      .channel                    = DMA1_Channel6,
+      .irq_vector                 = DMA1_Channel6_IRQn,
+      .complete_flags             = DMA_ISR_TCIF6,
+      .error_flags                = DMA_ISR_TEIF6,
+    },
+  },
 };
 platform_uart_driver_t platform_uart_drivers[MICO_UART_MAX];
 #if 0
@@ -241,7 +267,7 @@ const platform_flash_t platform_flash_peripherals[] =
   {
     .flash_type                   = FLASH_TYPE_EMBEDDED,
     .flash_start_addr             = 0x08000000,
-    .flash_length                 = 0x100000,
+    .flash_length                 = 0x80000,
   },
 };
 
@@ -255,38 +281,38 @@ const mico_logic_partition_t mico_partitions[] =
     .partition_owner           = MICO_FLASH_EMBEDDED,
     .partition_description     = "Bootloader",
     .partition_start_addr      = 0x08000000,
-    .partition_length          =     0x4000,    //16k bytes
+    .partition_length          = 0x8000,    //32k bytes
     .partition_options         = PAR_OPT_READ_EN | PAR_OPT_WRITE_DIS,
   },
   [MICO_PARTITION_APPLICATION] =
   {
     .partition_owner           = MICO_FLASH_EMBEDDED,
     .partition_description     = "Application",
-    .partition_start_addr      = 0x0800C000, 
-    .partition_length          =    0x54000,   //336k bytes
+    .partition_start_addr      = 0x08010000, 
+    .partition_length          = 0x38000,   //224k bytes
     .partition_options         = PAR_OPT_READ_EN | PAR_OPT_WRITE_DIS,
   },
   [MICO_PARTITION_OTA_TEMP] =
   {
     .partition_owner           = MICO_FLASH_EMBEDDED,
     .partition_description     = "OTA Storage",
-    .partition_start_addr      = 0x08060000,
-    .partition_length          = 0x60000, //384k bytes
+    .partition_start_addr      = 0x08048000,
+    .partition_length          = 0x38000, //224k bytes
     .partition_options         = PAR_OPT_READ_EN | PAR_OPT_WRITE_EN,
   },
   [MICO_PARTITION_PARAMETER_1] =
   {
     .partition_owner           = MICO_FLASH_EMBEDDED,
     .partition_description     = "PARAMETER1",
-    .partition_start_addr      = 0x08004000,
+    .partition_start_addr      = 0x08008000,
     .partition_length          = 0x4000, // 16k bytes
     .partition_options         = PAR_OPT_READ_EN | PAR_OPT_WRITE_EN,
   },
   [MICO_PARTITION_PARAMETER_2] =
   {
     .partition_owner           = MICO_FLASH_EMBEDDED,
-    .partition_description     = "PARAMETER1",
-    .partition_start_addr      = 0x08008000,
+    .partition_description     = "PARAMETER2",
+    .partition_start_addr      = 0x0800C000,
     .partition_length          = 0x4000, //16k bytes
     .partition_options         = PAR_OPT_READ_EN | PAR_OPT_WRITE_EN,
   },
@@ -297,35 +323,50 @@ const mico_logic_partition_t mico_partitions[] =
 /******************************************************
 *           Interrupt Handler Definitions
 ******************************************************/
-#if 0
-MICO_RTOS_DEFINE_ISR( USART1_IRQHandler )
+#if 1
+MICO_RTOS_DEFINE_ISR( USART3_IRQHandler )
 {
   platform_uart_irq( &platform_uart_drivers[MICO_UART_1] );
 }
 
-MICO_RTOS_DEFINE_ISR( USART6_IRQHandler )
+MICO_RTOS_DEFINE_ISR( USART1_IRQHandler )
 {
   platform_uart_irq( &platform_uart_drivers[MICO_UART_2] );
 }
 
-MICO_RTOS_DEFINE_ISR( DMA2_Stream7_IRQHandler )
+MICO_RTOS_DEFINE_ISR( USART2_IRQHandler )
+{
+  platform_uart_irq( &platform_uart_drivers[MICO_UART_3] );
+}
+
+MICO_RTOS_DEFINE_ISR( DMA1_Channel2_IRQHandler )
 {
   platform_uart_tx_dma_irq( &platform_uart_drivers[MICO_UART_1] );
 }
 
-MICO_RTOS_DEFINE_ISR( DMA2_Stream6_IRQHandler )
+MICO_RTOS_DEFINE_ISR( DMA1_Channel4_IRQHandler )
 {
   platform_uart_tx_dma_irq( &platform_uart_drivers[MICO_UART_2] );
 }
 
-MICO_RTOS_DEFINE_ISR( DMA2_Stream2_IRQHandler )
+MICO_RTOS_DEFINE_ISR( DMA1_Channel7_IRQHandler )
+{
+  platform_uart_tx_dma_irq( &platform_uart_drivers[MICO_UART_3] );
+}
+
+MICO_RTOS_DEFINE_ISR( DMA1_Channel3_IRQHandler )
 {
   platform_uart_rx_dma_irq( &platform_uart_drivers[MICO_UART_1] );
 }
 
-MICO_RTOS_DEFINE_ISR( DMA2_Stream1_IRQHandler )
+MICO_RTOS_DEFINE_ISR( DMA1_Channel5_IRQHandler )
 {
   platform_uart_rx_dma_irq( &platform_uart_drivers[MICO_UART_2] );
+}
+
+MICO_RTOS_DEFINE_ISR( DMA1_Channel6_IRQHandler )
+{
+  platform_uart_rx_dma_irq( &platform_uart_drivers[MICO_UART_3] );
 }
 #endif
 /******************************************************
@@ -356,11 +397,14 @@ void platform_init_peripheral_irq_priorities( void )
   /* Interrupt priority setup. Called by MiCO/platform/MCU/STM32F2xx/platform_init.c */
   NVIC_SetPriority( RTC_IRQn         ,  1 ); /* RTC Wake-up event   */
   NVIC_SetPriority( USART1_IRQn      ,  6 ); /* MICO_UART_1         */
+  NVIC_SetPriority( USART2_IRQn      ,  6 ); /* MICO_UART_2         */
   NVIC_SetPriority( USART3_IRQn      ,  6 ); /* MICO_UART_3         */
   NVIC_SetPriority( DMA1_Channel4_IRQn,  7 ); /* MICO_UART_1 TX DMA  */
   NVIC_SetPriority( DMA1_Channel5_IRQn,  7 ); /* MICO_UART_1 RX DMA  */
-  NVIC_SetPriority( DMA1_Channel2_IRQn,  7 ); /* MICO_UART_3 TX DMA  */
-  NVIC_SetPriority( DMA1_Channel3_IRQn,  7 ); /* MICO_UART_3 RX DMA  */
+  NVIC_SetPriority( DMA1_Channel2_IRQn,  7 ); /* MICO_UART_2 TX DMA  */
+  NVIC_SetPriority( DMA1_Channel3_IRQn,  7 ); /* MICO_UART_2 RX DMA  */
+  NVIC_SetPriority( DMA1_Channel6_IRQn,  7 ); /* MICO_UART_3 TX DMA  */
+  NVIC_SetPriority( DMA1_Channel7_IRQn,  7 ); /* MICO_UART_3 RX DMA  */
   NVIC_SetPriority( EXTI0_IRQn       , 14 ); /* GPIO                */
   NVIC_SetPriority( EXTI1_IRQn       , 14 ); /* GPIO                */
   NVIC_SetPriority( EXTI2_IRQn       , 14 ); /* GPIO                */
