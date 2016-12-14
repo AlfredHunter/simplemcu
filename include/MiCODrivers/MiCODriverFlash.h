@@ -107,7 +107,7 @@ extern const char*  flash_name[];  /**< A name string of a Flash drive */
  */
 mico_logic_partition_t* MicoFlashGetInfo( mico_partition_t inPartition );
 
-
+OSStatus MicoFlashInitialize( mico_partition_t partition );
 /**@brief   Erase an area on a Flash logical partition
  *
  * @note    Erase on an address will erase all data on a sector that the 

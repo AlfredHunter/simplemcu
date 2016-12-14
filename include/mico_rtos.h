@@ -33,7 +33,7 @@
 #define __MICORTOS_H__
 
 #include "common.h"
-
+//#include "cmsis_os.h"
 /** @addtogroup MICO_Core_APIs
   * @{
   */

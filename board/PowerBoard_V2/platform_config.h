@@ -8,7 +8,7 @@
 *                    Constants
 ******************************************************/
 
-#define HARDWARE_REVISION   "PM_V1.2"
+#define HARDWARE_REVISION   "PM_V1.3"
 #define DEFAULT_NAME        "POWERBOARD"
 #define MODEL               "POWERBOARD"
 
@@ -44,7 +44,7 @@
 #define SYSTEM_CLOCK_SOURCE     RCC_SYSCLKSource_PLLCLK  /* System clock source = PLL clock      */
 #define SYSTICK_CLOCK_SOURCE    SysTick_CLKSource_HCLK   /* SysTick clock source = AHB clock     */
 #define INT_FLASH_WAIT_STATE    FLASH_Latency_3          /* Internal flash wait state = 3 cycles */
-#endif
+
 /* The number of UART interfaces this hardware platform has */
 #define NUMBER_OF_UART_INTERFACES  3
 
@@ -76,4 +76,4 @@ Note: the 1st sector 0x08000000-0x08003FFF is reserved for the IAP code */
 #define UPDATE_END_ADDRESS          (uint32_t)0x0801FFFF  /* Optional */
 #define UPDATE_FLASH_SIZE           (UPDATE_END_ADDRESS - UPDATE_START_ADDRESS + 1) /* 53.247k bytes, optional*/
 
-
+#endif

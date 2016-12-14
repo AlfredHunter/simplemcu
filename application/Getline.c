@@ -33,7 +33,7 @@
 #include "common.h"                     /* global project definition file   */
 #include "mico.h"
 #include "platform_config.h"
-
+   
 #define CNTLQ      0x11
 #define CNTLS      0x13
 #define DEL        0x7F
@@ -41,6 +41,8 @@
 #define CR         0x0D
 #define LF         0x0A
 
+#ifndef NO_BLOCK_MENU
+   
 static void uart_putchar( int c )
 {
   MicoUartSend( STDIO_UART, &c, 1 );
@@ -74,6 +76,7 @@ void getline (char *line, int n)  {
   }  while (cnt < n - 1  &&  c != LF);      /* check limit and line feed      */
   *(line - 1) = 0;                          /* mark end of string             */
 }
+#endif
 
 #ifdef MICO_ENABLE_STDIO_TO_BOOT
 int stdio_break_in(void)

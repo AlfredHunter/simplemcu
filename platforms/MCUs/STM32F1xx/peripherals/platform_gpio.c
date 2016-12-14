@@ -81,8 +81,8 @@ OSStatus platform_gpio_init( const platform_gpio_t* gpio, platform_pin_config_t 
   require_action_quiet( gpio != NULL, exit, err = kParamErr);
   
   port_number = platform_gpio_get_port_number( gpio->port );
+  require_action_quiet( port_number != 0xFF, exit, err = kParamErr);
 
-  /* Enable peripheral clock for this port */
   RCC->APB2ENR |= gpio_peripheral_clocks[port_number];
 
   gpio_init_structure.Speed = config->gpio_speed;
@@ -186,17 +186,17 @@ OSStatus platform_gpio_irq_enable( const platform_gpio_t* gpio, platform_gpio_ir
   {
     case IRQ_TRIGGER_RISING_EDGE:
     {
-      gpio_init_structure.Pull = GPIO_MODE_IT_RISING;
+      gpio_init_structure.Mode = GPIO_MODE_IT_RISING;
       break;
     }
     case IRQ_TRIGGER_FALLING_EDGE:
     {
-      gpio_init_structure.Pull = GPIO_MODE_IT_FALLING;
+      gpio_init_structure.Mode = GPIO_MODE_IT_FALLING;
       break;
     }
     case IRQ_TRIGGER_BOTH_EDGES:
     {
-      gpio_init_structure.Pull = GPIO_MODE_IT_RISING_FALLING;
+      gpio_init_structure.Mode = GPIO_MODE_IT_RISING_FALLING;
       break;
     }
     default:
@@ -205,7 +205,10 @@ OSStatus platform_gpio_irq_enable( const platform_gpio_t* gpio, platform_gpio_ir
       goto exit;
     }
   }
-  (void)gpio_init_structure;
+  gpio_init_structure.Speed = GPIO_SPEED_MEDIUM;
+  gpio_init_structure.Pull  = GPIO_PULLDOWN;
+  
+  HAL_GPIO_Init( gpio->port, &gpio_init_structure );
   
   if ( ( interrupt_line & 0x001F ) != 0 )
   {
@@ -227,7 +230,6 @@ OSStatus platform_gpio_irq_enable( const platform_gpio_t* gpio, platform_gpio_ir
   EXTI->PR = interrupt_line;
   NVIC_ClearPendingIRQ( interrupt_vector ); 
 
-  HAL_NVIC_SetPriority( interrupt_vector, 0x0F, interrupt_line );
   NVIC_EnableIRQ( interrupt_vector );
   
   gpio_irq_data[gpio->pin_number].owner_port = gpio->port;

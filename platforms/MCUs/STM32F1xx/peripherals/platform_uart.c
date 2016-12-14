@@ -24,7 +24,9 @@
 /******************************************************
 *                    Constants
 ******************************************************/
-//#define UART_NOT_USE_DMA
+#ifndef BOOTLOADER
+#define UART_NOT_USE_DMA
+#endif
 //#define DMA_INTERRUPT_FLAGS  ( DMA_IT_TC | DMA_IT_TE | DMA_IT_DME | DMA_IT_FE )
 #define DMA_INTERRUPT_FLAGS  ( DMA_IT_TC | DMA_IT_TE ) // | DMA_IT_HT
 
@@ -46,7 +48,7 @@
 /* UART alternate functions */
 /* UART peripheral clock functions */
 //#define uart_peripheral_clock_functions(uart_ports) __HAL_RCC_USART##uart_ports##_CLK_ENABLE
-static UART_HandleTypeDef ComUartHandle;
+//static UART_HandleTypeDef ComUartHandle;
 static DMA_HandleTypeDef *hdma_tx[3] = NULL;
 static DMA_HandleTypeDef *hdma_rx[3] = NULL;
 /* UART interrupt vectors */
@@ -75,18 +77,10 @@ OSStatus platform_uart_init( platform_uart_driver_t* driver, const platform_uart
   uart_number = platform_uart_get_port_number( peripheral->port );
   if( uart_number < 3 )
   {
-    if( hdma_tx[ uart_number ] )
-    {
-      free( hdma_tx[ uart_number ] );
-    }
-    hdma_tx[ uart_number ] = (DMA_HandleTypeDef *)malloc( sizeof(DMA_HandleTypeDef) );
-    require_action_quiet( hdma_tx[ uart_number ], exit, err = kNoMemoryErr);
-    if( hdma_rx[ uart_number ] )
-    {
-      free( hdma_rx[ uart_number ] );
-    }
-    hdma_rx[ uart_number ] = (DMA_HandleTypeDef *)malloc( sizeof(DMA_HandleTypeDef) );
-    require_action_quiet( hdma_rx[ uart_number ], exit, err = kNoMemoryErr);
+    require_action_quiet( driver->tx_dma_handle, exit, err = kParamErr );
+    hdma_tx[ uart_number ] = driver->tx_dma_handle;
+    require_action_quiet( driver->rx_dma_handle, exit, err = kParamErr );
+    hdma_rx[ uart_number ] = driver->rx_dma_handle;    
   }
   
   driver->rx_size              = 0;
@@ -94,7 +88,8 @@ OSStatus platform_uart_init( platform_uart_driver_t* driver, const platform_uart
   driver->last_transmit_result = kNoErr;
   driver->last_receive_result  = kNoErr;
   driver->peripheral           = (platform_uart_t*)peripheral;
-  driver->uart_handle          = (UART_HandleTypeDef *)&ComUartHandle;
+  require_action_quiet( driver->uart_handle, exit, err = kParamErr );
+//  driver->uart_handle          = (UART_HandleTypeDef *)&ComUartHandle;
 
   mico_rtos_init_semaphore( &driver->tx_complete, 1 );
   mico_rtos_init_semaphore( &driver->rx_complete, 1 );
@@ -127,6 +122,7 @@ OSStatus platform_uart_init( platform_uart_driver_t* driver, const platform_uart
     __HAL_RCC_USART1_CLK_ENABLE();
     break;
   case 1:
+    __HAL_AFIO_REMAP_USART2_ENABLE();//comment to not remap
     __HAL_RCC_USART2_CLK_ENABLE();
     break;
   case 2:
@@ -451,7 +447,7 @@ OSStatus platform_uart_receive_bytes( platform_uart_driver_t* driver, uint8_t* d
 
   require_action_quiet( ( driver != NULL ) && ( data_in != NULL ) && ( expected_data_size != 0 ), exit, err = kParamErr);
 #ifdef UART_NOT_USE_DMA  
-  HAL_UART_Receive(driver->uart_handle, (uint8_t *)data_in, expected_data_size, timeout_ms);
+  require_action_quiet(HAL_UART_Receive(driver->uart_handle, (uint8_t *)data_in, expected_data_size, timeout_ms) == HAL_OK, exit, err = kTimeoutErr);
 #else
   if ( driver->rx_buffer != NULL)
   {

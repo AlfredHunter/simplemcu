@@ -96,7 +96,9 @@ OSStatus MicoAdcInitialize( mico_adc_t adc, uint32_t sampling_cycle );
  */
 OSStatus MicoAdcTakeSample( mico_adc_t adc, uint16_t* output );
 
-
+OSStatus MicoAdcStreamInitializeEarly( mico_adc_t adc, uint8_t channels );
+OSStatus MicoAdcStreamAddChannel( mico_adc_t adc, uint32_t sample_cycle );
+OSStatus MicoAdcStreamInitializeLate( mico_adc_t adc, void* buffer, uint16_t buffer_length );
 /**@biref Takes multiple samples from an ADC interface
  *
  * Takes multiple samples from an ADC interface and stores them in

@@ -85,7 +85,7 @@ OSStatus MicoPwmInitialize(mico_pwm_t pwm, uint32_t frequency, float duty_cycle)
  */
 OSStatus MicoPwmStart(mico_pwm_t pwm);
 
-
+OSStatus MicoPwmSetDuty( mico_pwm_t pwm, float duty_cycle );
 /**@brief Stops output on a PWM pin
  *
  * @note  Stops Pulse-Width Modulation signal output on a PWM pin

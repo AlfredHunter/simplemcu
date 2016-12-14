@@ -45,8 +45,8 @@ typedef int Log_Status;
 #define Log_UnkonwnERROR            (7)
 #define Log_CRCERROR                (8)
 
-#define SizePerRW 4096   /* Bootloader need 2xSizePerRW RAM heap size to operate, 
-                            but it can boost the setup. */
+#define SizePerRW 4096   /* Bootloader need 2xSizePerRW RAM heap size to operate, */
+                            /*but it can boost the setup. */
 
 static uint8_t data[SizePerRW];
 static uint8_t newData[SizePerRW];
@@ -141,7 +141,6 @@ Log_Status updateLogCheck( boot_table_t *updateLog, mico_partition_t *dest_parti
     return Log_NeedUpdate;
 }
 
-
 OSStatus update(void)
 {
   boot_table_t updateLog;
@@ -150,8 +149,8 @@ OSStatus update(void)
   uint32_t dest_offset;
   uint32_t boot_table_offset = 0x0;
   uint32_t para_offset = 0x0;
-  uint32_t copyLength;
-  //uint8_t *paraSaveInRam = NULL;
+  uint32_t copyLength;  
+//  uint8_t *paraSaveInRam = NULL;
   mico_logic_partition_t *ota_partition_info, *dest_partition_info, *para_partition_info;
   mico_partition_t dest_partition;
   OSStatus err = kNoErr;
@@ -165,8 +164,8 @@ OSStatus update(void)
   memset(data, 0xFF, SizePerRW);
   memset(newData, 0xFF, SizePerRW);
 
-  //paraSaveInRam = malloc( para_partition_info->partition_length );
-  //require_action( paraSaveInRam, exit, err = kNoMemoryErr );
+//  paraSaveInRam = malloc( para_partition_info->partition_length );
+//  require_action( paraSaveInRam, exit, err = kNoMemoryErr );
   memset(paraSaveInRam, 0xFF, para_partition_info->partition_length);
     
   err = MicoFlashRead( MICO_PARTITION_PARAMETER_1, &boot_table_offset, (uint8_t *)&updateLog, sizeof(boot_table_t));

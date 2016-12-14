@@ -199,7 +199,7 @@ void Main_Menu(void)
   mico_logic_partition_t *partition;
   mico_flash_t flash_dev;
   OSStatus err = kNoErr;
-  
+  uint32_t test_data_offset = 0x0;
   while (1)  {                                    /* loop forever                */
     printf ("\n\rPowerBoard> ");
 #if defined __GNUC__
@@ -249,6 +249,17 @@ void Main_Menu(void)
     
     /***************** Command "2" or "PARAUPDATE": Update the application  *************************/
     else if(strcmp(cmdname, "PARUPDATE") == 0 || strcmp(cmdname, "2") == 0)  {
+#if 0
+      char const *testData = "hello,world";
+      char readData[20];
+      partition = MicoFlashGetInfo( MICO_PARTITION_PARAMETER_2 );
+      err = MicoFlashDisableSecurity( MICO_PARTITION_PARAMETER_2, 0x0, partition->partition_length );
+      require_noerr( err, exit);
+      MicoFlashErase( MICO_PARTITION_PARAMETER_2, 0x0, partition->partition_length );
+      MicoFlashWrite( MICO_PARTITION_PARAMETER_2, &test_data_offset, (uint8_t *)testData, 20 );
+      MicoFlashRead( MICO_PARTITION_PARAMETER_2, &test_data_offset, (uint8_t *)readData, 20 );
+      printf("read data:%s\r\n", readData);
+#else
       if (findCommandPara(cmdbuf, "id", idStr, 0) != -1){
         if(Str2Int((uint8_t *)idStr, &id)==0 && id > 0 && id < MICO_PARTITION_MAX ){ //Found Flash start address
           printf ("\n\rIllegal start address.\n\r");
@@ -276,7 +287,8 @@ void Main_Menu(void)
       printf ("\n\rUpdating %s...\n\r", partition->partition_description );
       err = MicoFlashDisableSecurity( (mico_partition_t)id, 0x0, partition->partition_length );
       require_noerr( err, exit);
-      SerialDownload( partition->partition_owner, partition->partition_start_addr, partition->partition_length );                        
+      SerialDownload( partition->partition_owner, partition->partition_start_addr, partition->partition_length );  
+#endif
     }
     
     /***************** Command "3" or "FLASHUPDATE": : Update the Flash  *************************/

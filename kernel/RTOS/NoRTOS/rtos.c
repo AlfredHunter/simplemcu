@@ -34,16 +34,19 @@ typedef volatile struct _noos_semaphore_t
 
 OSStatus mico_rtos_init_semaphore( mico_semaphore_t* semaphore, int count )
 {
+#if 0
     noos_semaphore_t *noos_semaphore;
     UNUSED_PARAMETER( count );
     noos_semaphore = malloc(sizeof(noos_semaphore_t));
     noos_semaphore->count = 0;
     *semaphore = (void *)noos_semaphore;
+#endif
     return kNoErr;
 }
 
 OSStatus mico_rtos_get_semaphore( mico_semaphore_t* semaphore, uint32_t timeout_ms )
 {
+#if 0
     noos_semaphore_t *noos_semaphore = (noos_semaphore_t *)*semaphore;
     int delay_start;
 
@@ -60,12 +63,13 @@ OSStatus mico_rtos_get_semaphore( mico_semaphore_t* semaphore, uint32_t timeout_
     DISABLE_INTERRUPTS();
     noos_semaphore->count--;
     ENABLE_INTERRUPTS();
-
+#endif
     return kNoErr;
 }
 
 OSStatus mico_rtos_set_semaphore( mico_semaphore_t* semaphore )
 {
+#if 0
     noos_semaphore_t *noos_semaphore = (noos_semaphore_t *)*semaphore;
 
     if( noos_semaphore == NULL)
@@ -74,19 +78,20 @@ OSStatus mico_rtos_set_semaphore( mico_semaphore_t* semaphore )
     DISABLE_INTERRUPTS();
     noos_semaphore->count++;
     ENABLE_INTERRUPTS();
-
+#endif
     return kNoErr;
 }
 
 OSStatus mico_rtos_deinit_semaphore( mico_semaphore_t* semaphore )
 {
+#if 0
     noos_semaphore_t *noos_semaphore = (noos_semaphore_t *)*semaphore;
 
     if( noos_semaphore == NULL)
         return kNotInitializedErr;
 
     free((void *)noos_semaphore);
-
+#endif
     return kNoErr;
 }
 

@@ -333,7 +333,7 @@ OSStatus internalFlashWrite(volatile uint32_t* FlashAddress, uint32_t* Data ,uin
       require_action(*(uint16_t*)*FlashAddress == *(uint16_t *)Data, exit, err = kChecksumErr); 
       *FlashAddress += 2;
       Data = (uint32_t *)((uint32_t)Data + 2);
-      require_action(HAL_FLASH_Program(FLASH_TYPEPROGRAM_HALFWORD, *FlashAddress, ((uint16_t)*Data & 0x00FF)  | 0xFF00) == HAL_OK, exit, err = kWriteErr);
+      require_action(HAL_FLASH_Program(FLASH_TYPEPROGRAM_HALFWORD, *FlashAddress, (((uint16_t)*Data) & 0x00FF)  | 0xFF00) == HAL_OK, exit, err = kWriteErr);
       require_action(*(uint16_t*)*FlashAddress == ((uint16_t)*Data & 0x00FF) | 0xFF00, exit, err = kChecksumErr); 
       *FlashAddress += 1;
       Data = (uint32_t *)((uint32_t)Data + 1);

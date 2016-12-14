@@ -2003,7 +2003,7 @@
         </option>
         <option>
           <name>OGChipSelectEditMenu</name>
-          <state>STM32F103xB	ST STM32F103xB</state>
+          <state>STM32F103xE	ST STM32F103xE</state>
         </option>
         <option>
           <name>GenLowLevelInterface</name>
@@ -3845,9 +3845,15 @@
       </file>
       <file>
         <name>$PROJ_DIR$\..\..\..\..\board\PowerBoard\platform.h</name>
+        <excluded>
+          <configuration>POWERBOARD_STM32F103ZE</configuration>
+        </excluded>
       </file>
       <file>
         <name>$PROJ_DIR$\..\..\..\..\board\PowerBoard\platform_config.h</name>
+        <excluded>
+          <configuration>POWERBOARD_STM32F103ZE</configuration>
+        </excluded>
       </file>
     </group>
     <group>

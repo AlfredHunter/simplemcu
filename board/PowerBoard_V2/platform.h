@@ -102,6 +102,7 @@ POWERBOARD V1.2 platform pin definitions ...
 
 typedef enum
 {
+#if 0
     MICO_GPIO_SYS_LED,
     MICO_GPIO_SWITCH,
     MICO_GPIO_UART1_TX,
@@ -110,6 +111,94 @@ typedef enum
     MICO_GPIO_UART2_RX,
     MICO_GPIO_UART3_TX,
     MICO_GPIO_UART3_RX,
+#endif
+#if 1
+    MICO_GPIO_SYS_LED,
+    MICO_GPIO_PWRKEY,
+    
+    MICO_GPIO_MOTOR_EN,
+    MICO_GPIO_SENSOR_EN,
+    MICO_GPIO_LEDS_EN,
+    MICO_GPIO_5V_RES_EN,
+    MICO_GPIO_PAD_EN,
+    MICO_GPIO_ROUTER_EN,
+    MICO_GPIO_2_1_PA_EN,
+    MICO_GPIO_DYP_EN,
+    MICO_GPIO_X86_EN,
+    MICO_GPIO_NV_EN,
+    MICO_GPIO_DLP_EN,
+    MICO_GPIO_12V_RES_EN,
+    MICO_GPIO_PRINTER_EN,
+    MICO_GPIO_24V_RES_EN,
+    MICO_GPIO_BAT_NV_EN,
+    MICO_GPIO_5V_EN,
+    MICO_GPIO_12V_EN,
+    MICO_GPIO_24V_EN,
+  
+    MICO_GPIO_CHARGE_ADC,
+    MICO_GPIO_BATIN_ADC,
+    MICO_GPIO_VBUS_ADC,
+    MICO_GPIO_BAT_MOTOR_ADC,
+    MICO_GPIO_SWITCH_ADC,
+    MICO_GPIO_2_1_PA_ADC,
+    MICO_GPIO_PAD_ADC,
+    MICO_GPIO_PRINTER_ADC,
+    MICO_GPIO_X86_ADC,
+    MICO_GPIO_5V_RES1_ADC,
+    MICO_GPIO_12V_RES2_ADC,
+    MICO_GPIO_BAT_NV_ADC,
+    MICO_GPIO_12V_NV_ADC,
+    MICO_GPIO_ROUTER_ADC,
+    MICO_GPIO_DYP_ADC,
+    MICO_GPIO_SENSOR_ADC,
+    MICO_GPIO_DLP_ADC,
+    MICO_GPIO_IRLED_ADC,
+    MICO_GPIO_LEDS_ADC,
+    MICO_GPIO_MOTOR_ADC,
+    MICO_GPIO_24V_RES1_ADC,
+  
+    MICO_GPIO_PWR_NV,
+    MICO_GPIO_PWR_DLP,
+    MICO_GPIO_PWR_PAD,
+    MICO_GPIO_PWR_X86,
+    MICO_GPIO_PWR_RES,
+  
+    MICO_GPIO_UART3_TX,
+    MICO_GPIO_UART3_RX,
+  
+    MICO_GPIO_LED_PWM,
+    MICO_GPIO_ADAPTER_IN,
+    MICO_GPIO_FAN_CTRL,
+
+    MICO_GPIO_RECHARGE_LED,    
+    MICO_GPIO_IRLED_PWM,
+    MICO_GPIO_CAN_RX,
+    MICO_GPIO_CAN_TX,
+    MICO_GPIO_CAN_STB,
+  
+    MICO_GPIO_SPI_NSS,
+    MICO_GPIO_SPI_SCK,
+    MICO_GPIO_SPI_MISO,
+    MICO_GPIO_SPI_MOSI,
+  
+    MICO_GPIO_I2C_SCL,
+    MICO_GPIO_I2C_SDA,
+  
+    MICO_GPIO_UART2_TX,
+    MICO_GPIO_UART2_RX,
+  
+    MICO_GPIO_UART1_TX,
+    MICO_GPIO_UART1_RX,
+  
+    MICO_GPIO_ID1,
+    MICO_GPIO_ID2,
+  
+    MICO_GPIO_SWITCH_EN,
+    MICO_GPIO_SWITCH_SEL0,
+    MICO_GPIO_SWITCH_SEL1,
+    MICO_GPIO_SWITCH_SEL2,
+    MICO_GPIO_SWITCH_SEL3,
+#endif
     MICO_GPIO_MAX, /* Denotes the total number of GPIO port aliases. Not a valid GPIO alias */
     MICO_GPIO_NONE,
 } mico_gpio_t;
@@ -130,7 +219,7 @@ typedef enum
 
 typedef enum
 {
-    MICO_PWM_1,
+    MICO_PWM_IRLED,
     MICO_PWM_2,
     MICO_PWM_3,
     MICO_PWM_MAX, /* Denotes the total number of PWM port aliases. Not a valid PWM alias */
@@ -139,9 +228,42 @@ typedef enum
 
 typedef enum
 {
-    MICO_ADC_1,
-    MICO_ADC_2,
-    MICO_ADC_3,
+    /* following are adc1 channels */
+    MICO_ADC_5V_RES1,
+    MICO_ADC_12V_RES2,
+    MICO_ADC_BAT_NV,
+    MICO_ADC_12V_NV,
+    MICO_ADC_ROUTER,
+    MICO_ADC_DYP,
+    MICO_ADC_SENSOR,
+    MICO_ADC_DLP,
+    MICO_ADC_MOTOR,
+    MICO_ADC_24V_RES1,
+    MICO_ADC_2_1_PA,
+    MICO_ADC_PAD,
+    MICO_ADC_PRINTER,
+    MICO_ADC_X86,
+    MICO_ADC_IRLED,
+    MICO_ADC_LEDS,
+    /* following are adc3 channels */
+    MICO_ADC_CHARGE,
+    MICO_ADC_BATIN,
+    MICO_ADC_VBUS,
+    MICO_ADC_BAT_MOTOR,
+    MICO_ADC_SWITCH,
+    /* begin of vitual adc */
+    MICO_ADC_24V_TS,
+    MICO_ADC_12V_TS,
+    MICO_ADC_5V_TS,
+    MICO_ADC_AIR_TS,
+    MICO_ADC_24V_ALL,
+    MICO_ADC_12V_ALL,
+    MICO_ADC_5V_ALL,
+    MICO_ADC_VDET_24V,
+    MICO_ADC_VDET_12V,
+    MICO_ADC_VDET_5V,
+    MICO_ADC_VDET_BAT,
+    /* end of vitual adc */
     MICO_ADC_MAX, /* Denotes the total number of ADC port aliases. Not a valid ADC alias */
     MICO_ADC_NONE,
 } mico_adc_t;
@@ -168,22 +290,17 @@ typedef enum
 } mico_user_partition_t;
 
 #ifdef BOOTLOADER
-#define STDIO_UART          MICO_UART_3
+#define STDIO_UART          MICO_UART_2
 #define STDIO_UART_BAUDRATE (115200) 
 #else
-#define STDIO_UART          MICO_UART_3
+#define STDIO_UART          MICO_UART_1
 #define STDIO_UART_BAUDRATE (115200) 
 #endif
 
-#define UART_FOR_APP     MICO_UART_2
-#define MFG_TEST         MICO_UART_1
+#define COMM_UART        MICO_UART_3
+#define COMM_UART_BAUDRATE (115200) 
+#define UART_FOR_APP     MICO_UART_3
 #define CLI_UART         MICO_UART_1
-
-/* Components connected to external I/Os*/
-#define Standby_SEL      (MICO_GPIO_29)
-
-/* I/O connection <-> Peripheral Connections */
-#define MICO_I2C_CP      (MICO_I2C_1)
 
 
 #ifdef __cplusplus

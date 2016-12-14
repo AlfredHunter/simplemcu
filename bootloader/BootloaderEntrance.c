@@ -114,7 +114,7 @@ int main(void)
 
   mico_set_bootload_ver();
   
-  //update();
+  update();
 
   enable_protection();
 
@@ -124,7 +124,7 @@ int main(void)
 #endif
   
 //  if( MicoShouldEnterBootloader() == false )
-//    bootloader_start_app( (MicoFlashGetInfo(MICO_PARTITION_APPLICATION))->partition_start_addr );
+    bootloader_start_app( (MicoFlashGetInfo(MICO_PARTITION_APPLICATION))->partition_start_addr );
 
 #ifdef MICO_ENABLE_STDIO_TO_BOOT
 BOOT:
@@ -135,9 +135,9 @@ BOOT:
   while(1){    
 #if 0
     MicoGpioOutputLow( (mico_gpio_t)MICO_GPIO_SYS_LED );
-    HAL_Delay(500);
+    HAL_Delay(1);
     MicoGpioOutputHigh( (mico_gpio_t)MICO_GPIO_SYS_LED );
-    HAL_Delay(500);
+    HAL_Delay(1);
 #endif
     Main_Menu ();
   }

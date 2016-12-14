@@ -37,7 +37,7 @@ int main( void );
  * \li Defined internally in platforms/MCU/<MCU>/platform_init.c and called by CRT0
  * \li Weakly defined in platforms/MCU/<MCU>/platform_init.c. Users may override it as desired
  */
-extern void SysTick_Handler(void);
+//extern void SysTick_Handler(void);
 extern void platform_init_system_clocks( void );
 extern void init_clocks( void );
 

@@ -41,10 +41,21 @@
 #include "StringUtils.h"
 #include "bootloader.h"
 #include <ctype.h>                    
-
+#include "tps611xx_bl.h"
+#include "voltage_detect.h"
+#include "protocol.h"
+#include "upgrade_flash.h"
+   
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
 #define CMD_STRING_SIZE       128
+   
+#define CNTLQ      0x11
+#define CNTLS      0x13
+#define DEL        0x7F
+#define BACKSPACE  0x08
+#define CR         0x0D
+#define LF         0x0A
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
 extern platform_flash_t platform_flash_peripherals[];
@@ -58,7 +69,11 @@ char FileName[FILE_NAME_LENGTH];
 char ERROR_STR [] = "\n\r*** ERROR: %s\n\r";    /* ERROR message string in code   */
 
 extern char menu[];
+#ifdef NO_BLOCK_MENU
+extern int getline (char *line, int n);          /* input line               */
+#else
 extern void getline (char *line, int n);          /* input line               */
+#endif
 extern void startApplication( uint32_t app_addr );
 
 /* Private function prototypes -----------------------------------------------*/
@@ -74,6 +89,12 @@ void SerialUpload(mico_flash_t flash, uint32_t flashdestination, char * fileName
 * @param  paraBodyLength: The length, in bytes, of the buffer pointed to by the paraBody parameter.
 * @retval the actual length of the paraBody received, -1 means failed to find this paras 
 */
+#ifdef NO_BLOCK_MENU
+static void uart_putchar( int c )
+{
+  MicoUartSend( STDIO_UART, &c, 1 );
+}
+#endif
 int findCommandPara(char *commandBody, char *para, char *paraBody, int paraBodyLength)
 {
   int i = 0;
@@ -116,7 +137,6 @@ exit:
   if(paraBody) paraBody[retval] = 0x0;
   return retval;
 }
-
 
 /**
 * @brief  Download a file via serial port
@@ -183,7 +203,48 @@ void SerialUpload(mico_flash_t flash, uint32_t flashdestination, char * fileName
     }
   }
 }
-
+#ifdef NO_BLOCK_MENU
+static char *pCmdBuf = NULL;
+static int cnt = 0;
+int getline (char *line, int n)
+{
+  char c;
+  
+  pCmdBuf = line + cnt;
+  if( cnt >= (CMD_STRING_SIZE-2) )
+  {
+    goto exit;
+  }
+  if ( MicoUartRecv( STDIO_UART, &c, 1, 0 ) != kNoErr )
+  {
+      return -1;
+  }
+  if (c == CR)      /* read character                 */
+  {
+    c = LF;
+    goto exit;
+  }
+  if (c == BACKSPACE  ||  c == DEL)  {    /* process backspace              */
+    if (cnt != 0)  {
+      cnt--;                              /* decrement count                */
+      pCmdBuf--;                             /* and line pointer               */
+      uart_putchar (BACKSPACE);                /* echo backspace                 */
+      uart_putchar (' ');
+      uart_putchar (BACKSPACE);
+    }
+    return -1;
+  }
+  else if (c != CNTLQ && c != CNTLS)  {   /* ignore Control S/Q             */
+    uart_putchar (*pCmdBuf = c);                  /* echo and store character       */
+    pCmdBuf++;                               /* increment line pointer         */
+    cnt++;                                /* and count                      */
+    return -1;
+  }
+exit:
+  *(pCmdBuf) = 0;                          /* mark end of string             */ 
+  return 0;
+}
+#endif
 /**
 * @brief  Display the Main Menu on HyperTerminal
 * @param  None
@@ -191,7 +252,8 @@ void SerialUpload(mico_flash_t flash, uint32_t flashdestination, char * fileName
 */
 void Main_Menu(void)
 {
-  char cmdbuf [CMD_STRING_SIZE] = {0}, cmdname[15] = {0};     /* command input buffer        */
+  static char cmdbuf [CMD_STRING_SIZE] = {0}; 
+  char cmdname[15] = {0};     /* command input buffer        */
   int i, j;                                       /* index for command buffer    */
   char idStr[4], startAddressStr[10], endAddressStr[10], flash_dev_str[4];
   int32_t id, startAddress, endAddress;
@@ -200,13 +262,21 @@ void Main_Menu(void)
   mico_flash_t flash_dev;
   OSStatus err = kNoErr;
   
-  while (1)  {                                    /* loop forever                */
+  while (1)  {                                    /* loop forever                */   
+#ifndef NO_BLOCK_MENU
     printf ("\n\rPowerBoard> ");
+#endif
 #if defined __GNUC__
     fflush(stdout);
 #endif
-    getline (&cmdbuf[0], sizeof (cmdbuf));        /* input command line          */
-    
+#ifdef NO_BLOCK_MENU
+    if( -1 == getline (&cmdbuf[0], sizeof (cmdbuf)) )        /* input command line          */
+    {
+      return;
+    }
+#else
+    getline (&cmdbuf[0], sizeof (cmdbuf));
+#endif
     for (i = 0; cmdbuf[i] == ' '; i++);           /* skip blanks on head         */
     for (; cmdbuf[i] != 0; i++)  {                /* convert to upper characters */
       cmdbuf[i] = toupper(cmdbuf[i]);
@@ -372,20 +442,346 @@ void Main_Menu(void)
       break;                              
     }
     
-    else if(strcmp(cmdname, "HELP") == 0 || strcmp(cmdname, "?") == 0)	{
-        printf ( menu, MODEL, Bootloader_REVISION, HARDWARE_REVISION );  /* display command menu        */
+    else if(strcmp(cmdname, "TEST") == 0 || strcmp(cmdname, "7") == 0)  {
+      static uint8_t    isADC_Init = 0;
+      if (findCommandPara(cmdbuf, "0", NULL, 0) != -1){
+        MicoAdcInitialize( MICO_ADC_CHARGE, 250 );
+        printf("\r\n init charge currents adc \r\n");
+        isADC_Init = 1;
+      }
+      else if (findCommandPara(cmdbuf, "1", NULL, 0) != -1){        
+        MicoAdcInitialize( MICO_ADC_BATIN, 250 );
+        printf("\r\n init bat in currents adc \r\n");
+        isADC_Init = 2;
+      }
+      else if (findCommandPara(cmdbuf, "2", NULL, 0) != -1){        
+        MicoAdcInitialize( MICO_ADC_VBUS, 250 );
+        printf("\r\n init sys currents adc \r\n");
+        isADC_Init = 3;
+      }
+      else if (findCommandPara(cmdbuf, "3", NULL, 0) != -1){        
+        MicoAdcInitialize( MICO_ADC_BAT_MOTOR, 250 );
+        printf("\r\n init bat motor currents adc \r\n");
+        isADC_Init = 4;
+      }
+      else if (findCommandPara(cmdbuf, "4", NULL, 0) != -1){  
+        MicoAdcInitialize( MICO_ADC_SWITCH, 250 );
+        printf("\r\n init switch currents adc \r\n");
+        isADC_Init = 5;
+      }
+      else
+      {
+        if( !isADC_Init  )
+        {
+          printf( "\r\n7 -0: charge ADC\r\n"
+                      "7 -1: bat in ADC\r\n"
+                      "7 -2: system ADC\r\n"
+                      "7 -3: motor ADC\r\n"
+                      "7 -4: switch ADC\r\n");
+          break;
+        }
+      }
+      static uint16_t adcOutput;
+      switch( isADC_Init )
+      {
+      case 1:       
+      case 2:
+      case 3:
+      case 4:
+      case 5:
+        MicoAdcTakeSample( MICO_ADC_CHARGE, &adcOutput );
+        break;
+      }
+      
+      
+      printf( "\n\r adcOutput = %d\r\n", adcOutput );
+      break;                              
+    }
+    else if(strcmp(cmdname, "GPIO") == 0 || strcmp(cmdname, "8") == 0)  {
+      static char sel_Str[5];
+      if (findCommandPara(cmdbuf, "0", NULL, 0) != -1){
+        MicoGpioOutputTrigger( MICO_GPIO_SYS_LED );
+        printf("\r\n triggered sys led\r\n");
+      }
+      else if (findCommandPara(cmdbuf, "1", NULL, 0) != -1){
+        MicoGpioOutputTrigger( MICO_GPIO_5V_EN );
+        printf("\r\n triggered 5V \r\n");
+      }
+      else if (findCommandPara(cmdbuf, "2", NULL, 0) != -1){
+        MicoGpioOutputTrigger( MICO_GPIO_12V_EN );
+        printf("\r\n triggered 12V \r\n");
+      }
+      else if (findCommandPara(cmdbuf, "3", NULL, 0) != -1){
+        MicoGpioOutputTrigger( MICO_GPIO_24V_EN );
+        printf("\r\n triggered 24V \r\n");
+      }
+      else if (findCommandPara(cmdbuf, "4", NULL, 0) != -1){
+        MicoGpioOutputTrigger( MICO_GPIO_MOTOR_EN );
+        printf("\r\n triggered 5v motor \r\n");
+      }
+      else if (findCommandPara(cmdbuf, "5", NULL, 0) != -1){
+        MicoGpioOutputTrigger( MICO_GPIO_SENSOR_EN );
+        printf("\r\n triggered sensor \r\n");
+      }
+      else if (findCommandPara(cmdbuf, "6", NULL, 0) != -1){
+        MicoGpioOutputTrigger( MICO_GPIO_LEDS_EN );
+        printf("\r\n triggered leds \r\n");
+      }
+      else if (findCommandPara(cmdbuf, "7", NULL, 0) != -1){
+        MicoGpioOutputTrigger( MICO_GPIO_5V_RES_EN );
+        printf("\r\n triggered 5V reserve \r\n");
+      }
+      else if (findCommandPara(cmdbuf, "8", NULL, 0) != -1){
+        MicoGpioOutputTrigger( MICO_GPIO_PAD_EN );
+        printf("\r\n triggered pad \r\n");
+      }
+      else if (findCommandPara(cmdbuf, "9", NULL, 0) != -1){
+        MicoGpioOutputTrigger( MICO_GPIO_ROUTER_EN );
+        printf("\r\n triggered router \r\n");
+      }
+      else if (findCommandPara(cmdbuf, "A", NULL, 0) != -1){
+        MicoGpioOutputTrigger( MICO_GPIO_2_1_PA_EN );
+        printf("\r\n triggered 2.1 pa \r\n");
+      }
+      else if (findCommandPara(cmdbuf, "B", NULL, 0) != -1){
+        MicoGpioOutputTrigger( MICO_GPIO_DYP_EN );
+        printf("\r\n triggered dyp \r\n");
+      }
+      else if (findCommandPara(cmdbuf, "C", NULL, 0) != -1){
+        MicoGpioOutputTrigger( MICO_GPIO_X86_EN );
+        printf("\r\n triggered x86 \r\n");
+      }
+      else if (findCommandPara(cmdbuf, "D", NULL, 0) != -1){
+        MicoGpioOutputTrigger( MICO_GPIO_NV_EN );
+        printf("\r\n triggered nv \r\n");
+      }
+      else if (findCommandPara(cmdbuf, "E", NULL, 0) != -1){
+        MicoGpioOutputTrigger( MICO_GPIO_12V_RES_EN );
+        printf("\r\n triggered 12v reserve \r\n");
+      }
+      else if (findCommandPara(cmdbuf, "F", NULL, 0) != -1){
+        MicoGpioOutputTrigger( MICO_GPIO_PRINTER_EN );
+        printf("\r\n triggered printer \r\n");
+      }
+      else if (findCommandPara(cmdbuf, "G", NULL, 0) != -1){
+        MicoGpioOutputTrigger( MICO_GPIO_24V_RES_EN );
+        printf("\r\n triggered 24V reserve \r\n");
+      }
+      else if (findCommandPara(cmdbuf, "H", NULL, 0) != -1){
+        MicoGpioOutputTrigger( MICO_GPIO_BAT_NV_EN );
+        printf("\r\n triggered bat nv \r\n");
+      }
+      else if (findCommandPara(cmdbuf, "I", NULL, 0) != -1){
+        MicoGpioOutputTrigger( MICO_GPIO_PWR_NV );
+        printf("\r\n triggered PWR NV \r\n");
+      }
+      else if (findCommandPara(cmdbuf, "J", NULL, 0) != -1){
+        MicoGpioOutputTrigger( MICO_GPIO_PWR_DLP );
+        printf("\r\n triggered PWR DLP \r\n");
+      }
+      else if (findCommandPara(cmdbuf, "K", NULL, 0) != -1){
+        MicoGpioOutputTrigger( MICO_GPIO_PWR_PAD );
+        printf("\r\n triggered PWR PAD \r\n");
+      }
+      else if (findCommandPara(cmdbuf, "L", NULL, 0) != -1){
+        MicoGpioOutputTrigger( MICO_GPIO_PWR_X86 );
+        printf("\r\n triggered PWR X86 \r\n");
+      }
+      else if (findCommandPara(cmdbuf, "M", NULL, 0) != -1){
+        MicoGpioOutputTrigger( MICO_GPIO_PWR_RES );
+        printf("\r\n triggered PWR RES \r\n");
+      }
+      else if (findCommandPara(cmdbuf, "N", NULL, 0) != -1){
+        MicoGpioOutputTrigger( MICO_GPIO_DLP_EN );
+        printf("\r\n triggered dlp \r\n");
+      }
+      else if ( findCommandPara(cmdbuf, "O", sel_Str, 0) != -1 )
+      {      
+        int32_t        sel_num;
+        Str2Int((uint8_t *)sel_Str, &sel_num );
+        if( sel_num/10000 )
+        {
+          MicoGpioOutputLow( (mico_gpio_t)MICO_GPIO_SWITCH_EN );
+          printf("\r\n switch en: 0\r\n");
+        }
+        else
+        {
+          MicoGpioOutputHigh( (mico_gpio_t)MICO_GPIO_SWITCH_EN );
+          printf("\r\n switch en: 1\r\n");
+        }
+        if( sel_num%10000/1000 )
+        {
+          MicoGpioOutputHigh( (mico_gpio_t)MICO_GPIO_SWITCH_SEL0 );
+          printf("\r\n switch sel0: 1\r\n");
+        }
+        else
+        {
+          MicoGpioOutputLow( (mico_gpio_t)MICO_GPIO_SWITCH_SEL0 );
+          printf("\r\n switch sel0: 0\r\n");
+        }
+        if( sel_num%1000/100 )
+        {
+          MicoGpioOutputHigh( (mico_gpio_t)MICO_GPIO_SWITCH_SEL1 );
+          printf("\r\n switch sel1: 1\r\n");
+        }
+        else
+        {
+          MicoGpioOutputLow( (mico_gpio_t)MICO_GPIO_SWITCH_SEL1 );
+          printf("\r\n switch sel1: 0\r\n");
+        }
+        if( sel_num%100/10 )
+        {
+          MicoGpioOutputHigh( (mico_gpio_t)MICO_GPIO_SWITCH_SEL2 );
+          printf("\r\n switch sel2: 1\r\n");
+        }
+        else
+        {
+          MicoGpioOutputLow( (mico_gpio_t)MICO_GPIO_SWITCH_SEL2 );
+          printf("\r\n switch sel2: 0\r\n");
+        }
+        if( sel_num%10 )
+        {
+          MicoGpioOutputHigh( (mico_gpio_t)MICO_GPIO_SWITCH_SEL3 );
+          printf("\r\n switch sel3: 1\r\n");
+        }
+        else
+        {
+          MicoGpioOutputLow( (mico_gpio_t)MICO_GPIO_SWITCH_SEL3 );
+          printf("\r\n switch sel3: 0\r\n");
+        }
+      }
+      else {
+        printf(   "\r\n8 -0: sys led\r\n"
+                      "8 -1: 5v\r\n"
+                      "8 -2: 12v\r\n"
+                      "8 -3: 24v\r\n"
+                      "8 -4: 5v motor\r\n"
+                      "8 -5: sensor\r\n"
+                      "8 -6: leds\r\n"
+                      "8 -7: 5v reserve\r\n"
+                      "8 -8: pad\r\n"
+                      "8 -9: router\r\n"
+                      "8 -A: 2.1 pa\r\n"
+                      "8 -B: dyp\r\n"
+                      "8 -C: x86\r\n"
+                      "8 -D: nv\r\n"
+                      "8 -E: 12v reserve\r\n"
+                      "8 -F: printer\r\n"                      
+                      "8 -G: 24v reserve\r\n"
+                      "8 -H: bat nv\r\n"
+                      "8 -I: PWR NV\r\n"
+                      "8 -J: PWR DLP\r\n"
+                      "8 -K: PWR PAD\r\n"
+                      "8 -L: PWR X86\r\n"
+                      "8 -M: PWR RES\r\n"
+                      "8 -N: DLP\r\n");
+      }
+    }
+    else if( strcmp(cmdname, "IRLED") == 0 || strcmp(cmdname, "9") == 0 )
+    {
+      static char dutyStr[2], frequencyStr[6];
+      int32_t   duty, freguency;
+      if (findCommandPara(cmdbuf, "0", NULL, 0) != -1){
+        startTps611xx();
+        printf("\r\n start tps611xx work \r\n");
+      }
+      else if (findCommandPara(cmdbuf, "1", dutyStr, 0) != -1){
+        Str2Int((uint8_t *)dutyStr, &duty );
+#if (defined TPS_CONTROL_MODE) && (TPS_CONTROL_MODE == EASY_SCALE)
+        brightness_dimming_by_duty( (uint8_t)duty );      
+        printf("\r\n dimming duty:%d\r\n",duty );
+#elif (defined TPS_CONTROL_MODE) && (TPS_CONTROL_MODE == PWM)
+        if (findCommandPara(cmdbuf, "f", frequencyStr, 0) != -1)
+        {
+          Str2Int((uint8_t *)frequencyStr, &freguency );
+          brightness_dimming( (uint32_t)freguency, (uint8_t)duty );
+          //brightness_dimming_by_duty( (uint8_t)duty );
+          printf("\r\n dimming frequency and duty:%d %d\r\n",freguency, duty );
+        }
+#endif
+      }
+      else
+      {
+        stopTps611xx( );
+        printf("\r\n stop tps611xx work\r\n" );
+      }
       break;
     }
-    
-    else if(strcmp(cmdname, "") == 0 )	{                         
+    else if( strcmp(cmdname, "SHOW") == 0 || strcmp(cmdname, "A") == 0 )
+    {
+      printf("\r\nadc sequence num: (mV)\r\n");
+      printf("1: 5v res\r\n");
+      printf("2: 12v res\r\n");
+      printf("3: bat nv\r\n");
+      printf("4: router\r\n");
+      printf("5: dyp\r\n");
+      printf("6: sensor\r\n");
+      printf("7: dlp\r\n");
+      printf("8: motor\r\n");
+      printf("9: 24v res\r\n");
+      printf("10: 2.1 pa\r\n");
+      printf("11: pad\r\n");
+      printf("12: 5v res\r\n");
+      printf("13: printer\r\n");
+      printf("14: x86\r\n");
+      printf("15: irled\r\n");
+      printf("16: leds\r\n");
+#if 1
+      printf("the second row\r\n");
+      printf("1: charge\r\n");
+      printf("2: bat in\r\n");
+      printf("3: vbus\r\n");
+      printf("4: bat motor\r\n");
+      printf("5: 24v ts\r\n");
+      printf("6: 12v ts\r\n");
+      printf("7: 5v ts\r\n");
+      printf("8: air ts\r\n");
+      printf("9: 24v all\r\n");
+      printf("10: 12v all\r\n");
+      printf("11: 5v all\r\n");
+      printf("12: vdet 24v\r\n");
+      printf("13: vdet 12v\r\n");
+      printf("14: vdet 5v\r\n");
+      printf("15: vdet bat\r\n");
+#endif
+      break;
+    }
+    else if(strcmp(cmdname, "VOL") == 0 || strcmp(cmdname, "B") == 0)	{
+      voltageDebug.printType = PRINT_ONCE;
+      break;
+    }
+    else if(strcmp(cmdname, "FlASH") == 0 || strcmp(cmdname, "C") == 0)	{
+      flashTable.isNeedAutoBoot = 'Y';
+      MICOBootConfiguration( &flashTable );
+      break;
+    }
+    else if(strcmp(cmdname, "COMLOG") == 0 || strcmp(cmdname, "D") == 0)  {
+      rx_buf.showLogFlag = OPEN_SHOW_LOG;
+      break;
+    }
+    else if(strcmp(cmdname, "HELP") == 0 || strcmp(cmdname, "?") == 0)	{
+        printf ( menu, MODEL, SW_VERSION, HARDWARE_REVISION );  /* display command menu        */
+      break;
+    }
+    else if(strcmp(cmdname, "") == 0 )	{                     
       break;
     }
     else{
       printf (ERROR_STR, "UNKNOWN COMMAND");
       break;
     }
-
+    
+#ifdef NO_BLOCK_MENU
+  }
+exit:
+    memset( cmdbuf, 0x0, cnt );
+    cnt = 0;
+    printf ("\n\rPowerBoard> ");
+    return;
+#else
 exit:
     continue;
   }
+#endif
+
 }

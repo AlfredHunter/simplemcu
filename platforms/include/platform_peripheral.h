@@ -611,8 +611,12 @@ OSStatus platform_adc_deinit( const platform_adc_t* adc );
  *
  * @return @ref OSStatus
  */
+
 OSStatus platform_adc_take_sample( const platform_adc_t* adc, uint16_t* output );
 
+OSStatus platform_adc_stream_init_early( const platform_adc_t* adc, uint32_t channels_num );
+OSStatus platform_add_to_adc_stream( const platform_adc_t* adc, uint32_t sample_cycle );
+OSStatus platform_adc_stream_init_late( const platform_adc_t* adc, void* buffer, uint16_t buffer_length );
 
 /**
  * Take ADC sample
@@ -732,7 +736,7 @@ OSStatus platform_pwm_init( const platform_pwm_t* pwm, uint32_t frequency, float
  */
 OSStatus platform_pwm_start( const platform_pwm_t* pwm );
 
-
+OSStatus platform_set_pwm_duty( const platform_pwm_t* pwm, float duty_cycle );
 /**
  * Stop generating PWM signal on the specified PWM interface
  *

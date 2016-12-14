@@ -7,6 +7,167 @@
 #include "mico_rtos.h"
 #include "debug.h"
 
+/** @brief Creates and starts a new thread
+  *
+  * @param thread     : Pointer to variable that will receive the thread handle (can be null)
+  * @param priority   : A priority number.
+  * @param name       : a text name for the thread (can be null)
+  * @param function   : the main thread function
+  * @param stack_size : stack size for this thread
+  * @param arg        : argument which will be passed to thread function
+  *
+  * @return    kNoErr          : on success.
+  * @return    kGeneralErr     : if an error occurred
+  */
+OSStatus  mico_rtos_create_thread( mico_thread_t* thread, uint8_t priority, const char* name, mico_thread_function_t function, uint32_t stack_size, void* arg )
+{
+  OSStatus err = kNoErr;
+  require_action_quiet( xTaskCreate( function, name, stack_size, arg, priority, thread ) == pdPASS, exit, err = kGeneralErr );
+exit:
+  return err;  
+}
+
+/** @brief   Deletes a terminated thread
+  *
+  * @param   thread     : the handle of the thread to delete, , NULL is the current thread
+  *
+  * @return  kNoErr        : on success.
+  * @return  kGeneralErr   : if an error occurred
+  */
+OSStatus mico_rtos_delete_thread( mico_thread_t* thread )
+{
+  OSStatus err = kNoErr;
+  vTaskDelete( thread );
+  return err;  
+}
+
+/** @brief   Creates a worker thread
+ *
+ * Creates a worker thread
+ * A worker thread is a thread in whose context timed and asynchronous events
+ * execute.
+ *
+ * @param worker_thread    : a pointer to the worker thread to be created
+ * @param priority         : thread priority
+ * @param stack_size       : thread's stack size in number of bytes
+ * @param event_queue_size : number of events can be pushed into the queue
+ *
+ * @return    kNoErr        : on success.
+ * @return    kGeneralErr   : if an error occurred
+ */
+//OSStatus mico_rtos_create_worker_thread( mico_worker_thread_t* worker_thread, uint8_t priority, uint32_t stack_size, uint32_t event_queue_size );
+
+
+/** @brief   Deletes a worker thread
+ *
+ * @param worker_thread : a pointer to the worker thread to be created
+ *
+ * @return    WICED_SUCCESS : on success.
+ * @return    WICED_ERROR   : if an error occurred
+ */
+//OSStatus mico_rtos_delete_worker_thread( mico_worker_thread_t* worker_thread );
+
+
+/** @brief    Suspend a thread
+  *
+  * @param    thread     : the handle of the thread to suspend, NULL is the current thread
+  *
+  * @return   kNoErr        : on success.
+  * @return   kGeneralErr   : if an error occurred
+  */
+void mico_rtos_suspend_thread(mico_thread_t* thread)
+{
+  vTaskSuspend( thread );
+}
+
+
+
+/** @brief    Suspend all other thread
+  *
+  * @param    none
+  *
+  * @return   none
+  */
+//void mico_rtos_suspend_all_thread(void)
+//{
+  //vTaskSuspendAll();
+//}
+
+
+/** @brief    Rresume all other thread
+  *
+  * @param    none
+  *
+  * @return   none
+  */
+//long mico_rtos_resume_all_thread(void)
+//{
+  //return (long)xTaskResumeAll();
+//}
+
+
+/** @brief    Sleeps until another thread has terminated
+  *
+  * @Details  Causes the current thread to sleep until the specified other thread
+  *           has terminated. If the processor is heavily loaded with higher priority
+  *           tasks, this thread may not wake until significantly after the thread termination.
+  *
+  * @param    thread : the handle of the other thread which will terminate
+  *
+  * @return   kNoErr        : on success.
+  * @return   kGeneralErr   : if an error occurred
+  */
+//OSStatus mico_rtos_thread_join( mico_thread_t* thread )
+
+
+/** @brief    Forcibly wakes another thread
+  *
+  * @Details  Causes the specified thread to wake from suspension. This will usually
+  *           cause an error or timeout in that thread, since the task it was waiting on
+  *           is not complete.
+  *
+  * @param    thread : the handle of the other thread which will be woken
+  *
+  * @return   kNoErr        : on success.
+  * @return   kGeneralErr   : if an error occurred
+  */
+//OSStatus mico_rtos_thread_force_awake( mico_thread_t* thread )
+
+
+/** @brief    Checks if a thread is the current thread
+  *
+  * @Details  Checks if a specified thread is the currently running thread
+  *
+  * @param    thread : the handle of the other thread against which the current thread 
+  *                    will be compared
+  *
+  * @return   true   : specified thread is the current thread
+  * @return   false  : specified thread is not currently running
+  */
+//bool mico_rtos_is_current_thread( mico_thread_t* thread );
+
+/** @brief    Suspend current thread for a specific time
+  *
+  * @param    timer : A time interval (Unit: seconds)
+  *
+  * @return   None.
+  */
+void mico_thread_sleep(uint32_t seconds)
+{
+  vTaskDelay( seconds * 1000 / portTICK_PERIOD_MS );
+}
+
+/** @brief    Suspend current thread for a specific time
+ *
+ * @param     timer : A time interval (Unit: millisecond)
+ *
+ * @return    None.
+ */
+void mico_thread_msleep(uint32_t milliseconds)
+{
+  vTaskDelay( milliseconds / portTICK_PERIOD_MS );
+}
+
 /** @brief    Initialises a counting semaphore and set count to 0
   *
   * @param    semaphore : a pointer to the semaphore handle to be initialised
@@ -34,8 +195,9 @@ exit:
 OSStatus mico_rtos_set_semaphore( mico_semaphore_t* semaphore )
 {
   OSStatus err = kNoErr;
-  require_action_quiet( semaphore, exit, err = kParamErr);
-  require_action_quiet( xSemaphoreGive( semaphore ) == pdTRUE, exit, err = kGeneralErr); 
+//  static BaseType_t xHigherPriorityTaskWoken;
+//  require_action_quiet( semaphore, exit, err = kParamErr);
+//  require_action_quiet( xSemaphoreGiveFromISR( semaphore, &xHigherPriorityTaskWoken) == pdTRUE, exit, err = kGeneralErr); 
 exit:
   return err;
 }
@@ -55,8 +217,8 @@ exit:
 OSStatus mico_rtos_get_semaphore( mico_semaphore_t* semaphore, uint32_t timeout_ms )
 {
   OSStatus err = kNoErr;
-  require_action_quiet( semaphore, exit, err = kParamErr);
-  require_action_quiet( xSemaphoreTake( semaphore, timeout_ms ) == pdTRUE, exit, err = kGeneralErr );
+//  require_action_quiet( semaphore, exit, err = kParamErr);
+//  require_action_quiet( xSemaphoreTake( semaphore, timeout_ms ) == pdTRUE, exit, err = kGeneralErr );
 exit:
   return err;
 }
@@ -102,8 +264,8 @@ exit:
 OSStatus mico_rtos_init_mutex( mico_mutex_t* mutex )
 {
   OSStatus err = kNoErr;
-  mutex = xSemaphoreCreateMutex();
-  require_action_quiet( mutex, exit, err = kGeneralErr);
+//  mutex = xSemaphoreCreateMutex();
+//  require_action_quiet( mutex, exit, err = kGeneralErr);
 exit:
   return err;
 }
@@ -123,8 +285,8 @@ exit:
 OSStatus mico_rtos_lock_mutex( mico_mutex_t* mutex )
 {
   OSStatus err = kNoErr;
-  require_action_quiet( mutex, exit, err = kParamErr);
-  require_action_quiet( xSemaphoreGive( mutex ) == pdTRUE, exit, err = kGeneralErr); 
+ // require_action_quiet( mutex, exit, err = kParamErr);
+//  require_action_quiet( xSemaphoreGive( mutex ) == pdTRUE, exit, err = kGeneralErr); 
 exit:
   return err;
 }
@@ -143,8 +305,8 @@ exit:
 OSStatus mico_rtos_unlock_mutex( mico_mutex_t* mutex )
 {
   OSStatus err = kNoErr;
-  require_action_quiet( mutex, exit, err = kParamErr );
-  require_action_quiet( xSemaphoreTake( mutex, 0 ) == pdTRUE, exit, err = kGeneralErr );
+//  require_action_quiet( mutex, exit, err = kParamErr );
+//  require_action_quiet( xSemaphoreTake( mutex, 0 ) == pdTRUE, exit, err = kGeneralErr );
 exit:
   return err;
 }

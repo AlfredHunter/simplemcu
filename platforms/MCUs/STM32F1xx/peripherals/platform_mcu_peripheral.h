@@ -109,7 +109,7 @@ typedef struct
 {
     ADC_TypeDef*           port;
     uint8_t                channel;
-    uint32_t               adc_peripheral_clock;
+    ADC_HandleTypeDef*     handle;
     uint8_t                rank;
     const platform_gpio_t* pin;
 } platform_adc_t;
@@ -117,6 +117,7 @@ typedef struct
 typedef struct
 {
     TIM_TypeDef*           tim;
+    TIM_HandleTypeDef*     tim_handle;
     uint8_t                channel;
     uint32_t               tim_peripheral_clock;
     uint8_t                gpio_af;
@@ -186,6 +187,8 @@ typedef struct
 {
     platform_uart_t*           peripheral;
     UART_HandleTypeDef*        uart_handle;
+    DMA_HandleTypeDef*         rx_dma_handle;
+    DMA_HandleTypeDef*         tx_dma_handle;
     ring_buffer_t*             rx_buffer;
     mico_semaphore_t           rx_complete;
     mico_semaphore_t           tx_complete;

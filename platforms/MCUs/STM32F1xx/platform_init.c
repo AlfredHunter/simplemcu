@@ -152,6 +152,19 @@ void platform_mcu_reset( void )
     NVIC_SystemReset();
 }
 
+#ifndef BOOTLOADER
+HAL_StatusTypeDef HAL_InitTick(uint32_t TickPriority)
+{
+  /*Configure the SysTick to have interrupt in 10ms time basis*/
+  HAL_SYSTICK_Config(HAL_RCC_GetHCLKFreq()/100);
+
+  /*Configure the SysTick IRQ priority */
+  HAL_NVIC_SetPriority(SysTick_IRQn, TickPriority ,0);
+
+   /* Return function status */
+  return HAL_OK;
+}
+#endif
 /* STM32F2 common clock initialisation function
 * This brings up enough clocks to allow the processor to run quickly while initialising memory.
 * Other platform specific clock init can be done in init_platform() or init_architecture()
@@ -161,9 +174,11 @@ void init_clocks( void )
   RCC_ClkInitTypeDef clkinitstruct = {0};
   RCC_OscInitTypeDef oscinitstruct = {0};
 
-  if(__HAL_RCC_GET_SYSCLK_SOURCE() == RCC_SYSCLKSOURCE_STATUS_PLLCLK)
-    return;
   HAL_Init(); 
+  if(__HAL_RCC_GET_SYSCLK_SOURCE() == RCC_SYSCLKSOURCE_STATUS_PLLCLK)
+  {
+    return;
+  }
 /**
   * @brief  System Clock Configuration
   *         The system Clock is configured as follow : 
@@ -234,7 +249,7 @@ void init_architecture( void )
     NVIC ->IP[i] = 0xff;
   }
   
-  HAL_NVIC_SetPriorityGrouping(NVIC_PRIORITYGROUP_4);
+  HAL_NVIC_SetPriorityGrouping( NVIC_PRIORITYGROUP_4 );
 
   platform_init_peripheral_irq_priorities();
 
@@ -285,26 +300,36 @@ OSStatus stdio_hardfault( char* data, uint32_t size )
 *            NO-OS Functions
 ******************************************************/
 
-#ifdef NO_MICO_RTOS
 static volatile uint32_t no_os_tick = 0;
-
-void SysTick_Handler(void)
-{
-  HAL_IncTick();
-  no_os_tick ++;
-  platform_watchdog_kick( );
-}
 
 uint32_t mico_get_time_no_os(void)
 {
   return no_os_tick;
 }
+
+#ifdef NO_MICO_RTOS
+
+#ifndef BOOTLOADER
+#include "serial_leds.h"
+#endif
+
+void sysTickHandler(void)
+{
+  HAL_IncTick();
+  no_os_tick ++;
+#ifndef BOOTLOADER  
+  serialLedsTick();
+#endif
+  platform_watchdog_kick( );
+}
+
 #else
 
-void SysTick_Handler(void)
+void sysTickHandler(void)
 {
-  osSystickHandler();
+//  osSystickHandler();
   HAL_IncTick();
+  platform_watchdog_kick( );
 }
 
 #endif

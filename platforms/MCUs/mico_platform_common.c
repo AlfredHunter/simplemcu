@@ -141,6 +141,27 @@ OSStatus MicoAdcTakeSample( mico_adc_t adc, uint16_t* output )
   return (OSStatus) platform_adc_take_sample( &platform_adc_peripherals[adc], output );
 }
 
+OSStatus MicoAdcStreamInitializeEarly( mico_adc_t adc, uint8_t channels )
+{
+  if ( adc >= MICO_ADC_NONE )
+    return kUnsupportedErr;
+  return (OSStatus) platform_adc_stream_init_early( &platform_adc_peripherals[adc], channels );
+}
+
+OSStatus MicoAdcStreamAddChannel( mico_adc_t adc, uint32_t sample_cycle )
+{
+  if ( adc >= MICO_ADC_NONE )
+    return kUnsupportedErr;
+  return (OSStatus) platform_add_to_adc_stream( &platform_adc_peripherals[adc], sample_cycle );
+}
+
+OSStatus MicoAdcStreamInitializeLate( mico_adc_t adc, void* buffer, uint16_t buffer_length )
+{
+  if ( adc >= MICO_ADC_NONE )
+    return kUnsupportedErr;
+  return (OSStatus) platform_adc_stream_init_late( &platform_adc_peripherals[adc], buffer, buffer_length );
+}
+
 OSStatus MicoAdcTakeSampleStreram( mico_adc_t adc, void* buffer, uint16_t buffer_length )
 {
   if ( adc >= MICO_ADC_NONE )
@@ -328,6 +349,13 @@ OSStatus MicoPwmStart( mico_pwm_t pwm )
   if ( pwm >= MICO_PWM_NONE )
     return kUnsupportedErr;
   return (OSStatus) platform_pwm_start( &platform_pwm_peripherals[pwm] );
+}
+
+OSStatus MicoPwmSetDuty( mico_pwm_t pwm, float duty_cycle )
+{
+  if ( pwm >= MICO_PWM_NONE )
+    return kUnsupportedErr;
+  return (OSStatus) platform_set_pwm_duty( &platform_pwm_peripherals[pwm], duty_cycle );
 }
 
 OSStatus MicoPwmStop( mico_pwm_t pwm )
@@ -556,7 +584,7 @@ mico_logic_partition_t* MicoFlashGetInfo( mico_partition_t inPartition )
 }
 
 
-static OSStatus MicoFlashInitialize( mico_partition_t partition )
+OSStatus MicoFlashInitialize( mico_partition_t partition )
 {
   OSStatus err = kNoErr;
   
@@ -616,6 +644,7 @@ exit:
 OSStatus MicoFlashWrite( mico_partition_t partition, volatile uint32_t* off_set, uint8_t* inBuffer ,uint32_t inBufferLength)
 {
   OSStatus err = kNoErr;
+
   uint32_t start_addr = mico_partitions[ partition ].partition_start_addr + *off_set;
   uint32_t end_addr = mico_partitions[ partition ].partition_start_addr + *off_set + inBufferLength - 1;
 

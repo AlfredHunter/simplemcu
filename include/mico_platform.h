@@ -88,8 +88,8 @@ extern const mico_spi_device_t mico_spi_flash;
   * @{
   */
 
-#define ENABLE_INTERRUPTS   __asm("CPSIE i")  /**< Enable interrupts to start task switching in MICO RTOS. */
-#define DISABLE_INTERRUPTS  __asm("CPSID i")  /**< Disable interrupts to stop task switching in MICO RTOS. */
+#define ENABLE_INTERRUPTS()   __asm("CPSIE i")  /**< Enable interrupts to start task switching in MICO RTOS. */
+#define DISABLE_INTERRUPTS()  __asm("CPSID i")  /**< Disable interrupts to stop task switching in MICO RTOS. */
 
 
 /** @brief    Software reboot the MICO hardware
